@@ -1006,6 +1006,17 @@ class ShoppingfeedOrderImportActions extends DefaultActions
         $isUseSfTax = false;
         $isUseEcotax = false;
         $discounts = [];
+        // eBay sends the item price tax excluded and the VAT in taxAmount
+        // (set before the specific rules, which can still override it)
+        if (strtolower(trim((string) $apiOrder->getChannel()->getName())) === 'ebay') {
+            foreach ((array) ($apiOrder->toArray()['items'] ?? []) as $sfItem) {
+                if (isset($sfItem['taxAmount']) && (float) $sfItem['taxAmount'] > 0) {
+                    $isAmountTaxIncl = false;
+                    $isUseSfTax = true;
+                    break;
+                }
+            }
+        }
         // Specific rules
         $this->specificRulesManager->applyRules(
             'beforeRecalculateOrderPrices',
